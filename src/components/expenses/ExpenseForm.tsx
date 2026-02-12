@@ -16,17 +16,27 @@ interface ExpenseFormProps {
 export function ExpenseForm({ initialData, categories, academyId, year, month, onSave, onClose }: ExpenseFormProps) {
     const [formData, setFormData] = useState<{
         category_id: string;
-        amount: number;
+        amount: number | '';
         payment_method: 'card' | 'cash' | 'transfer';
         note: string;
         receipt_url: string;
+        is_instructor_fee: boolean;
+        instructor_name: string;
     }>({
         category_id: '',
-        amount: 0,
+        amount: '',
         payment_method: 'card',
         note: '',
         receipt_url: '',
+        is_instructor_fee: false,
+        instructor_name: '',
     });
+
+    // Auto-calculate tax values
+    const taxRate = 0.033;
+    const amountNum = Number(formData.amount) || 0;
+    const withholdingTax = Math.floor(amountNum * taxRate);
+    const actualPayment = amountNum - withholdingTax;
 
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,6 +49,8 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
                 payment_method: initialData.payment_method,
                 note: initialData.note || '',
                 receipt_url: initialData.receipt_url || '',
+                is_instructor_fee: initialData.is_instructor_fee || false,
+                instructor_name: initialData.instructor_name || '',
             });
         } else if (categories.length > 0) {
             setFormData(prev => ({ ...prev, category_id: categories[0].id }));
@@ -118,12 +130,22 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({
+
+        const submitData: any = {
             academy_id: academyId,
             year: initialData ? initialData.year : year,
             month: initialData ? initialData.month : month,
             ...formData,
-        });
+            amount: Number(formData.amount) || 0,
+        };
+
+        if (formData.is_instructor_fee) {
+            submitData.tax_rate = 3.3;
+            submitData.withholding_tax = withholdingTax;
+            submitData.actual_payment = actualPayment;
+        }
+
+        onSave(submitData);
         onClose();
     };
 
@@ -146,7 +168,15 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
                             required
                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                             value={formData.category_id}
-                            onChange={e => setFormData({ ...formData, category_id: e.target.value })}
+                            onChange={e => {
+                                const newData = { ...formData, category_id: e.target.value };
+                                // Auto-select instructor fee option if category is '강사료'
+                                const selectedCat = categories.find(c => c.id === e.target.value);
+                                if (selectedCat?.name === '강사료') {
+                                    newData.is_instructor_fee = true;
+                                }
+                                setFormData(newData);
+                            }}
                         >
                             <option value="" disabled>카테고리 선택</option>
                             {categories.map(cat => (
@@ -161,10 +191,55 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
                             type="number"
                             required
                             min="0"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-lg font-semibold"
                             value={formData.amount}
-                            onChange={e => setFormData({ ...formData, amount: Number(e.target.value) })}
+                            onChange={e => {
+                                const val = e.target.value;
+                                setFormData({ ...formData, amount: val === '' ? '' : Number(val) });
+                            }}
+                            placeholder="0"
                         />
+                        {formData.is_instructor_fee && amountNum > 0 && (
+                            <div className="mt-2 text-xs space-y-1 text-slate-600 bg-blue-50 p-2 rounded border border-blue-100">
+                                <div className="flex justify-between">
+                                    <span>원천징수세 (3.3%):</span>
+                                    <span className="font-medium text-red-600">-{withholdingTax.toLocaleString()}원</span>
+                                </div>
+                                <div className="flex justify-between border-t border-blue-200 pt-1 mt-1">
+                                    <span className="font-bold text-blue-700">실 수령액:</span>
+                                    <span className="font-bold text-blue-700">{actualPayment.toLocaleString()}원</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-3">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="is_instructor_fee"
+                                className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                checked={formData.is_instructor_fee}
+                                onChange={e => setFormData({ ...formData, is_instructor_fee: e.target.checked })}
+                            />
+                            <label htmlFor="is_instructor_fee" className="text-sm font-medium text-slate-700 select-none">
+                                일일강사 비용 (3.3% 원천징수 대상)
+                            </label>
+                        </div>
+
+                        {formData.is_instructor_fee && (
+                            <div className="animate-in slide-in-from-top-2 duration-200">
+                                <label className="block text-xs font-medium text-slate-500 mb-1">강사명</label>
+                                <input
+                                    type="text"
+                                    required={formData.is_instructor_fee}
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                                    placeholder="강사 이름을 입력하세요"
+                                    value={formData.instructor_name}
+                                    onChange={e => setFormData({ ...formData, instructor_name: e.target.value })}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div>

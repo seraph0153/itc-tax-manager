@@ -68,10 +68,27 @@ export function ExpenseList({ expenses, categories, onEdit, onDelete }: ExpenseL
                                     <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs">
                                         {getCategoryName(expense.category_id)}
                                     </span>
+                                    {expense.is_instructor_fee && (
+                                        <span className="ml-1 bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                            강사료
+                                        </span>
+                                    )}
                                 </td>
-                                <td className="px-6 py-3 text-slate-600">{expense.note || '-'}</td>
+                                <td className="px-6 py-3 text-slate-600">
+                                    {expense.note || '-'}
+                                    {expense.is_instructor_fee && (
+                                        <div className="text-xs text-slate-400 mt-0.5">
+                                            {expense.instructor_name} (실지급: {formatCurrency(expense.actual_payment || 0)})
+                                        </div>
+                                    )}
+                                </td>
                                 <td className="px-6 py-3 text-right font-medium text-slate-900">
                                     {formatCurrency(expense.amount)}
+                                    {expense.is_instructor_fee && (
+                                        <div className="text-xs text-red-400 font-normal">
+                                            (세금: {formatCurrency(expense.withholding_tax || 0)})
+                                        </div>
+                                    )}
                                 </td>
                                 <td className="px-6 py-3 text-center">
                                     <div className="flex items-center justify-center gap-1.5 text-slate-600" title={getPaymentLabel(expense.payment_method)}>

@@ -66,6 +66,13 @@ export interface Expense {
     receipt_url?: string;
     note?: string;
 
+    // Daily Instructor Fee
+    is_instructor_fee?: boolean;
+    instructor_name?: string;
+    tax_rate?: number; // 3.3
+    withholding_tax?: number;
+    actual_payment?: number;
+
     created_at: string;
 }
 

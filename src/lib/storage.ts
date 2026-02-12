@@ -11,6 +11,7 @@ const DEFAULT_CATEGORIES = [
     { id: 'cat_fee', name: '결제수수료', is_default: true, is_fixed_cost: false },
     { id: 'cat_comm', name: '통신비', is_default: true, is_fixed_cost: true },
     { id: 'cat_equip', name: '비품구입', is_default: true, is_fixed_cost: false },
+    { id: 'cat_instructor', name: '강사료', is_default: true, is_fixed_cost: false },
     { id: 'cat_other', name: '기타', is_default: true, is_fixed_cost: false },
 ];
 
@@ -84,13 +85,35 @@ export const storage = {
     getCategories: (academyId: string): ExpenseCategory[] => {
         const key = `${STORAGE_PREFIX}cats_${academyId}`;
         const data = localStorage.getItem(key);
-        if (data) return JSON.parse(data);
 
-        // Seed defaults
-        const defaults = DEFAULT_CATEGORIES.map(c => ({
+        // Seed defaults object
+        const createDefaults = () => DEFAULT_CATEGORIES.map(c => ({
             ...c,
             academy_id: academyId
         }));
+
+        if (data) {
+            const current: ExpenseCategory[] = JSON.parse(data);
+
+            // Migration: Ensure 'Instructor Fee' exists for existing users
+            const hasInstructor = current.some(c => c.name === '강사료');
+            if (!hasInstructor) {
+                const instructorCat = {
+                    id: 'cat_instructor',
+                    name: '강사료',
+                    is_default: true,
+                    is_fixed_cost: false,
+                    academy_id: academyId
+                };
+                const updated = [...current, instructorCat];
+                localStorage.setItem(key, JSON.stringify(updated));
+                return updated;
+            }
+            return current;
+        }
+
+        // Initialize new
+        const defaults = createDefaults();
         localStorage.setItem(key, JSON.stringify(defaults));
         return defaults;
     }
