@@ -19,11 +19,11 @@ const navItems = [
 
 export function Sidebar() {
     return (
-        <aside className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col h-screen fixed left-0 top-0">
+        <aside className={cn("w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col h-screen fixed left-0 top-0 z-40")}>
             <div className="p-6 flex items-center gap-3 text-white">
                 <BookOpen className="h-8 w-8 text-blue-400" />
                 <div>
-                    <h1 className="font-bold text-lg leading-tight">ITC 장현 세무기장</h1>
+                    <h1 className="font-bold text-lg leading-tight">ITC 장현 세무기장 (v2)</h1>
                     <p className="text-xs text-slate-400">학원 관리 시스템</p>
                 </div>
             </div>
