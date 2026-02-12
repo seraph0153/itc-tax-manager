@@ -1,10 +1,9 @@
-import { LucideIcon } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 
 interface KPICardProps {
     title: string;
     amount: number;
-    icon: LucideIcon;
+    icon: any;
     trend?: number; // percentage
     className?: string;
     iconClassName?: string;

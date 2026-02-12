@@ -19,7 +19,7 @@ const navItems = [
 
 export function Sidebar() {
     return (
-        <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed left-0 top-0">
+        <aside className="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col h-screen fixed left-0 top-0">
             <div className="p-6 flex items-center gap-3 text-white">
                 <BookOpen className="h-8 w-8 text-blue-400" />
                 <div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import DashboardPage from '@/pages/DashboardPage';
 import RevenuePage from '@/pages/RevenuePage';
@@ -8,7 +8,7 @@ import SettingsPage from '@/pages/SettingsPage';
 
 function App() {
     return (
-        <BrowserRouter>
+        <HashRouter>
             <Routes>
                 <Route path="/" element={<DashboardLayout />}>
                     <Route index element={<DashboardPage />} />
@@ -19,7 +19,7 @@ function App() {
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-        </BrowserRouter>
+        </HashRouter>
     );
 }
 
