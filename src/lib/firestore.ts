@@ -18,8 +18,8 @@ import { Revenue, Expense, ExpenseCategory, Academy } from './types';
 
 export const firestoreService = {
     // Academy Settings
-    getAcademy: async (uid: string): Promise<Academy | null> => {
-        const docRef = doc(db, 'users', uid, 'settings', 'academy');
+    // Academy Settings
+    getAcademy: async (_uid: string): Promise<Academy | null> => {
         // We might use getDoc here, but for now assuming direct access
         // Implementation detail: Firestore SDK needs to be imported for getDoc if not already.
         // Let's stick to simple patterns.
