@@ -20,8 +20,11 @@ const navItems = [
     { href: '/settings', label: '설정', icon: Settings },
 ];
 
+import { useSettings } from '@/contexts/SettingsContext';
+
 export function Sidebar() {
     const { user, userProfile, logout } = useAuth();
+    const { academyName } = useSettings();
     const isMaster = userProfile?.role === 'master';
 
     return (
@@ -31,7 +34,7 @@ export function Sidebar() {
                     <BookOpen className="h-6 w-6 text-blue-400" />
                 </div>
                 <div>
-                    <h1 className="font-bold text-lg leading-tight">ITC 장현 세무기장</h1>
+                    <h1 className="font-bold text-lg leading-tight">{academyName}</h1>
                     <p className="text-xs text-slate-400">학원 관리 시스템 v2</p>
                 </div>
             </div>

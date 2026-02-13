@@ -37,14 +37,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     const updateAcademyName = (name: string) => {
         setAcademyName(name);
-        const current = storage.getAcademy(academyId) || { id: academyId, name, owner_id: 'local', created_at: new Date().toISOString() };
+        const current = storage.getAcademy(academyId) || { id: academyId, name, owner_id: 'local', created_at: new Date().toISOString(), fiscal_year_start_month: 1 };
         const updated: Academy = { ...current, name };
         storage.saveAcademy(updated);
     };
 
     const updateSheetConfig = (spreadsheetId: string, scriptUrl: string) => {
         setSheetConfig({ spreadsheetId, scriptUrl });
-        const current = storage.getAcademy(academyId) || { id: academyId, name: academyName, owner_id: 'local', created_at: new Date().toISOString() };
+        const current = storage.getAcademy(academyId) || { id: academyId, name: academyName, owner_id: 'local', created_at: new Date().toISOString(), fiscal_year_start_month: 1 };
         const updated: Academy = {
             ...current,
             google_sheet_config: { spreadsheet_id: spreadsheetId, script_url: scriptUrl }
