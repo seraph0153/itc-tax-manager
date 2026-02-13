@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { storage } from '@/lib/storage';
+import { firestoreService } from '@/lib/firestore'; // Added
+import { useAuth } from '@/contexts/AuthContext'; // Added
 import { MonthlySummary } from '@/lib/types';
 
 export function useDashboardData(academyId: string, year: number) {
+    const { user } = useAuth(); // Add Auth Context
     const [loading, setLoading] = useState(true);
     const [summary, setSummary] = useState<{
         totalRevenue: number;
@@ -18,56 +21,75 @@ export function useDashboardData(academyId: string, year: number) {
 
     useEffect(() => {
         loadData();
-    }, [academyId, year]);
+    }, [academyId, year, user]); // Reload when user changes
 
-    const loadData = () => {
+    const loadData = async () => { // Make async
         setLoading(true);
-        const revenues = storage.getRevenues(academyId, year);
-        const expenses = storage.getExpenses(academyId, year);
+        try {
+            let revenues: any[] = [];
+            let expenses: any[] = [];
 
-        // Initialize 12 months
-        const monthlyData: MonthlySummary[] = Array.from({ length: 12 }, (_, i) => ({
-            year,
-            month: i + 1,
-            total_revenue: 0,
-            total_expense: 0,
-            net_income: 0,
-        }));
-
-        let totalRev = 0;
-        let totalExp = 0;
-
-        // Aggregate Revenue
-        revenues.forEach(r => {
-            const monthIdx = r.month - 1;
-            if (monthlyData[monthIdx]) {
-                const amount = r.amount_card + r.amount_cash + r.amount_local_currency + r.amount_other;
-                monthlyData[monthIdx].total_revenue += amount;
-                totalRev += amount;
+            if (user) {
+                // Cloud Mode
+                const [rev, exp] = await Promise.all([
+                    firestoreService.getRevenues(user.uid, year),
+                    firestoreService.getExpenses(user.uid, year)
+                ]);
+                revenues = rev;
+                expenses = exp;
+            } else {
+                // Local Mode
+                revenues = storage.getRevenues(academyId, year);
+                expenses = storage.getExpenses(academyId, year);
             }
-        });
 
-        // Aggregate Expenses
-        expenses.forEach(e => {
-            const monthIdx = e.month - 1;
-            if (monthlyData[monthIdx]) {
-                monthlyData[monthIdx].total_expense += e.amount;
-                totalExp += e.amount;
-            }
-        });
+            // Initialize 12 months
+            const monthlyData: MonthlySummary[] = Array.from({ length: 12 }, (_, i) => ({
+                year,
+                month: i + 1,
+                total_revenue: 0,
+                total_expense: 0,
+                net_income: 0,
+            }));
 
-        // Calculate Net Income
-        monthlyData.forEach(m => {
-            m.net_income = m.total_revenue - m.total_expense;
-        });
+            let totalRev = 0;
+            let totalExp = 0;
 
-        setSummary({
-            totalRevenue: totalRev,
-            totalExpense: totalExp,
-            netIncome: totalRev - totalExp,
-            monthlyData,
-        });
-        setLoading(false);
+            // Aggregate Revenue
+            revenues.forEach(r => {
+                const monthIdx = r.month - 1;
+                if (monthlyData[monthIdx]) {
+                    const amount = r.amount_card + r.amount_cash + r.amount_local_currency + r.amount_other;
+                    monthlyData[monthIdx].total_revenue += amount;
+                    totalRev += amount;
+                }
+            });
+
+            // Aggregate Expenses
+            expenses.forEach(e => {
+                const monthIdx = e.month - 1;
+                if (monthlyData[monthIdx]) {
+                    monthlyData[monthIdx].total_expense += e.amount;
+                    totalExp += e.amount;
+                }
+            });
+
+            // Calculate Net Income
+            monthlyData.forEach(m => {
+                m.net_income = m.total_revenue - m.total_expense;
+            });
+
+            setSummary({
+                totalRevenue: totalRev,
+                totalExpense: totalExp,
+                netIncome: totalRev - totalExp,
+                monthlyData,
+            });
+        } catch (error) {
+            console.error("Failed to load dashboard data:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return { ...summary, loading, refresh: loadData };

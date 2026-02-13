@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { storage } from '@/lib/storage';
+import { firestoreService } from '@/lib/firestore'; // Added
+import { useAuth } from '@/contexts/AuthContext'; // Added
 import { Expense, ExpenseCategory } from '@/lib/types';
 
 export function useExpenses(academyId: string) {
+    const { user } = useAuth(); // Add Auth Context
     const [year, setYear] = useState(new Date().getFullYear());
     const [month, setMonth] = useState(new Date().getMonth() + 1);
     const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -11,20 +14,49 @@ export function useExpenses(academyId: string) {
 
     useEffect(() => {
         loadData();
-    }, [academyId, year, month]);
+    }, [academyId, year, month, user]); // Reload when user changes
 
-    const loadData = () => {
+    const loadData = async () => { // Make async
         setLoading(true);
-        const allYearExpenses = storage.getExpenses(academyId, year);
-        const monthExpenses = allYearExpenses.filter(e => e.month === month);
-        const academyCategories = storage.getCategories(academyId);
+        try {
+            let allYearExpenses: Expense[] = [];
+            let academyCategories: ExpenseCategory[] = [];
 
-        setExpenses(monthExpenses);
-        setCategories(academyCategories);
-        setLoading(false);
+            if (user) {
+                // Cloud Mode
+                const [exp, cats] = await Promise.all([
+                    firestoreService.getExpenses(user.uid, year),
+                    firestoreService.getCategories(user.uid)
+                ]);
+                allYearExpenses = exp;
+                academyCategories = cats;
+
+                // If cloud categories are empty, seed them? 
+                // Migration service should handle this, but fallback:
+                if (academyCategories.length === 0) {
+                    // Fallback logic could go here or rely on migration
+                    // For now, let's assume migration ran or empty state is fine
+                    const localCats = storage.getCategories(academyId); // Get defaults
+                    academyCategories = localCats; // Use defaults for display if empty
+                }
+
+            } else {
+                // Local Mode
+                allYearExpenses = storage.getExpenses(academyId, year);
+                academyCategories = storage.getCategories(academyId);
+            }
+
+            const monthExpenses = allYearExpenses.filter(e => e.month === month);
+            setExpenses(monthExpenses);
+            setCategories(academyCategories);
+        } catch (error) {
+            console.error("Failed to load expenses:", error);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const addExpense = (data: Omit<Expense, 'id' | 'created_at' | 'category_name'>) => {
+    const addExpense = async (data: Omit<Expense, 'id' | 'created_at' | 'category_name'>) => {
         const category = categories.find(c => c.id === data.category_id);
         const newExpense: Expense = {
             ...data,
@@ -32,15 +64,19 @@ export function useExpenses(academyId: string) {
             category_name: category ? category.name : 'Unknown',
             created_at: new Date().toISOString(),
         };
-        storage.saveExpense(newExpense);
+
+        if (user) {
+            await firestoreService.saveExpense(user.uid, newExpense);
+        } else {
+            storage.saveExpense(newExpense);
+        }
         loadData();
     };
 
-    const updateExpense = (id: string, data: Partial<Expense>) => {
+    const updateExpense = async (id: string, data: Partial<Expense>) => {
         const current = expenses.find(e => e.id === id);
         if (!current) return;
 
-        // Update category name if category_id changed
         let categoryName = current.category_name;
         if (data.category_id) {
             const category = categories.find(c => c.id === data.category_id);
@@ -48,12 +84,21 @@ export function useExpenses(academyId: string) {
         }
 
         const updated: Expense = { ...current, ...data, category_name: categoryName };
-        storage.saveExpense(updated);
+
+        if (user) {
+            await firestoreService.saveExpense(user.uid, updated);
+        } else {
+            storage.saveExpense(updated);
+        }
         loadData();
     };
 
-    const deleteExpense = (id: string) => {
-        storage.deleteExpense(academyId, year, id);
+    const deleteExpense = async (id: string) => {
+        if (user) {
+            await firestoreService.deleteExpense(user.uid, id);
+        } else {
+            storage.deleteExpense(academyId, year, id);
+        }
         loadData();
     };
 
