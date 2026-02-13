@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { storage } from '@/lib/storage';
-import { Save, Download, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { Save, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 
 export default function SettingsPage() {
-  const academyId = 'demo-academy';
   const { academyName, updateAcademyName, sheetConfig, updateSheetConfig } = useSettings();
 
   // Local state for form inputs
@@ -43,7 +41,7 @@ export default function SettingsPage() {
 
     setIsBackingUp(true);
     try {
-      const response = await fetch(urlInput, {
+      await fetch(urlInput, {
         method: 'POST',
         mode: 'no-cors'
       });
