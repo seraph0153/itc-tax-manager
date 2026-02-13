@@ -27,8 +27,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (currentUser) {
                 try {
                     // Fetch or Create Profile
+                    // Ensure email matches case-insensitively just in case
+                    const isMaster = currentUser.email?.toLowerCase() === MASTER_EMAIL.toLowerCase();
                     let profile = await firestoreService.getUserProfile(currentUser.uid);
-                    const isMaster = currentUser.email === MASTER_EMAIL;
 
                     if (!profile) {
                         const newProfile: UserProfile = {
@@ -42,23 +43,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         };
                         await firestoreService.saveUserProfile(newProfile);
                         profile = newProfile;
-                    } else if (isMaster && profile.role !== 'master') {
-                        // Fix: If master email exists but role is not master (e.g. created before logic change), update it
-                        await firestoreService.updateUserStatus(currentUser.uid, 'approved'); // Ensure approved
-                        // We need a way to update role. 
-                        // Let's manually double check firestore update.
-                        // Actually, firestoreService doesn't have updateRole, so let's use saveUserProfile with merge or specific update.
-                        // Since saveUserProfile overwrites or we can add a specific update method.
-                        // Let's just update the local profile object and save it back.
-                        profile = { ...profile, role: 'master', status: 'approved' };
-                        await firestoreService.saveUserProfile(profile);
+                    } else {
+                        // If user exists, check if it should be master
+                        if (isMaster && (profile.role !== 'master' || profile.status !== 'approved')) {
+                            console.log("Upgrading user to master:", currentUser.email);
+                            profile = {
+                                ...profile,
+                                role: 'master',
+                                status: 'approved',
+                                // Ensure critical fields are preserved/updated
+                                email: currentUser.email || profile.email
+                            };
+                            // Use merge logic if possible, but saveUserProfile overwrites. 
+                            // Since we spread ...profile, it works as a merge of existing + changes.
+                            await firestoreService.saveUserProfile(profile);
+                        }
                     }
 
                     setUserProfile(profile);
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
-                    // Handle error appropriately, maybe set user to null or show error
-                    setUserProfile(null);
+                    // Even if firestore fails, if it's the master email, allow access in current session
+                    if (currentUser.email === MASTER_EMAIL) {
+                        console.warn("Firestore error, but forcing master role for session.");
+                        setUserProfile({
+                            uid: currentUser.uid,
+                            email: currentUser.email,
+                            displayName: currentUser.displayName || 'Master',
+                            role: 'master',
+                            status: 'approved',
+                            requestedAt: new Date().toISOString()
+                        });
+                    } else {
+                        setUserProfile(null);
+                    }
                 }
             } else {
                 setUserProfile(null);
