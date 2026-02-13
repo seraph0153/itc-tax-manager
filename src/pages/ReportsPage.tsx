@@ -2,14 +2,15 @@ import { useState, useRef } from 'react';
 import { useReports } from '@/hooks/useReports';
 import { AnnualReport } from '@/components/reports/AnnualReport';
 import { TaxReport } from '@/components/reports/TaxReport';
-import { Printer } from 'lucide-react';
+import { Printer, FileSpreadsheet } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
+import { downloadSimpleLedgerCSV } from '@/lib/export';
 
 export default function ReportsPage() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [viewMode, setViewMode] = useState<'annual' | 'tax'>('annual');
     const academyId = 'demo-academy';
-    const { monthlyData, categorySummaries, totals, loading } = useReports(academyId, year);
+    const { monthlyData, categorySummaries, totals, loading, revenues, expenses } = useReports(academyId, year);
 
     const componentRef = useRef(null);
 
@@ -60,13 +61,22 @@ export default function ReportsPage() {
                     </div>
 
                     {viewMode === 'tax' && (
-                        <button
-                            onClick={() => handlePrint()}
-                            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium text-sm"
-                        >
-                            <Printer className="h-4 w-4" />
-                            인쇄하기
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => downloadSimpleLedgerCSV(year, revenues, expenses, 'ITC 영어학원')}
+                                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                            >
+                                <FileSpreadsheet className="h-4 w-4" />
+                                간편장부 엑셀저장
+                            </button>
+                            <button
+                                onClick={() => handlePrint()}
+                                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors font-medium text-sm"
+                            >
+                                <Printer className="h-4 w-4" />
+                                인쇄하기
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>

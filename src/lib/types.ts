@@ -26,6 +26,7 @@ export interface Revenue {
     academy_id: string;
     year: number;
     month: number;
+    day: number;
 
     student_count: number;
 
@@ -56,7 +57,9 @@ export interface Expense {
     id: string;
     academy_id: string;
     year: number;
+
     month: number;
+    day: number;
 
     category_id: string;
     category_name: string; // De-normalized for easier display/export

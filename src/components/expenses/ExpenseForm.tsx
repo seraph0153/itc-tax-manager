@@ -15,6 +15,7 @@ interface ExpenseFormProps {
 
 export function ExpenseForm({ initialData, categories, academyId, year, month, onSave, onClose }: ExpenseFormProps) {
     const [formData, setFormData] = useState<{
+        day: number;
         category_id: string;
         amount: number | '';
         payment_method: 'card' | 'cash' | 'transfer';
@@ -23,6 +24,7 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
         is_instructor_fee: boolean;
         instructor_name: string;
     }>({
+        day: new Date().getDate(),
         category_id: '',
         amount: '',
         payment_method: 'card',
@@ -44,6 +46,7 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
     useEffect(() => {
         if (initialData) {
             setFormData({
+                day: initialData.day || 1,
                 category_id: initialData.category_id,
                 amount: initialData.amount,
                 payment_method: initialData.payment_method,
@@ -92,20 +95,12 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
                     body: JSON.stringify(payload)
                 });
 
-                // PROBLEM: 'no-cors' mode returns opaque response, so we cannot get the URL back.
-                // SOLUTION: Apps Script must be deployed as "Anyone, even anonymous" and we can use Standard CORS (if GAS supported it well) OR assume JSONP (complicated).
-                // WORKAROUND: For this specific "Get URL back" requirement, we MUST use a proxy or 'cors' mode if GAS allows.
-                // Actually, GAS Web Apps DO support CORS if `ContentService.createTextOutput(...).setMimeType(...)` is used correctly and request follows redirect.
-                // Let's try standard fetch first. If standard fetch fails due to CORS, we have a problem.
-                // Most modern GAS deployments support 'cors' if requested correctly. "redirect: 'follow'" is key.
-
                 // RETRY with standard 'cors' (requires "Anyone" access setting in GAS)
                 try {
                     const res2 = await fetch(academy.google_sheet_config!.script_url, {
                         method: 'POST',
-                        // mode: 'cors', // Default
                         redirect: 'follow',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 'application/json' triggers Preflight which GAS hates. Use text/plain.
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                         body: JSON.stringify(payload)
                     });
                     const json = await res2.json();
@@ -162,27 +157,41 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">카테고리</label>
-                        <select
-                            required
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                            value={formData.category_id}
-                            onChange={e => {
-                                const newData = { ...formData, category_id: e.target.value };
-                                // Auto-select instructor fee option if category is '강사료'
-                                const selectedCat = categories.find(c => c.id === e.target.value);
-                                if (selectedCat?.name === '강사료') {
-                                    newData.is_instructor_fee = true;
-                                }
-                                setFormData(newData);
-                            }}
-                        >
-                            <option value="" disabled>카테고리 선택</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
+                    <div className="flex gap-4">
+                        <div className="w-1/3">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">일자 ({month}월)</label>
+                            <input
+                                type="number"
+                                required
+                                min="1"
+                                max="31"
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.day}
+                                onChange={e => setFormData({ ...formData, day: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">카테고리</label>
+                            <select
+                                required
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                value={formData.category_id}
+                                onChange={e => {
+                                    const newData = { ...formData, category_id: e.target.value };
+                                    // Auto-select instructor fee option if category is '강사료'
+                                    const selectedCat = categories.find(c => c.id === e.target.value);
+                                    if (selectedCat?.name === '강사료') {
+                                        newData.is_instructor_fee = true;
+                                    }
+                                    setFormData(newData);
+                                }}
+                            >
+                                <option value="" disabled>카테고리 선택</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div>
@@ -309,7 +318,6 @@ export function ExpenseForm({ initialData, categories, academyId, year, month, o
                                     alt="Receipt"
                                     className="w-full h-32 object-cover"
                                     onError={(e) => {
-                                        // Fallback if direct link fails (e.g. 403)
                                         e.currentTarget.src = "https://placehold.co/400x300?text=Image+Load+Error";
                                     }}
                                 />

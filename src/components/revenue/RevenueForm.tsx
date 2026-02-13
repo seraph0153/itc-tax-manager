@@ -13,6 +13,7 @@ interface RevenueFormProps {
 
 export function RevenueForm({ initialData, academyId, year, month, onSave, onClose }: RevenueFormProps) {
     const [formData, setFormData] = useState({
+        day: new Date().getDate(),
         student_count: 0,
         amount_card: 0,
         amount_cash: 0,
@@ -24,6 +25,7 @@ export function RevenueForm({ initialData, academyId, year, month, onSave, onClo
     useEffect(() => {
         if (initialData) {
             setFormData({
+                day: initialData.day || 1,
                 student_count: initialData.student_count,
                 amount_card: initialData.amount_card,
                 amount_cash: initialData.amount_cash,
@@ -58,16 +60,30 @@ export function RevenueForm({ initialData, academyId, year, month, onSave, onClo
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">학생 수</label>
-                        <input
-                            type="number"
-                            required
-                            min="0"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.student_count}
-                            onChange={e => setFormData({ ...formData, student_count: Number(e.target.value) })}
-                        />
+                    <div className="flex gap-4">
+                        <div className="w-1/3">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">일자 ({month}월)</label>
+                            <input
+                                type="number"
+                                required
+                                min="1"
+                                max="31"
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.day}
+                                onChange={e => setFormData({ ...formData, day: Number(e.target.value) })}
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">학생 수</label>
+                            <input
+                                type="number"
+                                required
+                                min="0"
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.student_count}
+                                onChange={e => setFormData({ ...formData, student_count: Number(e.target.value) })}
+                            />
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

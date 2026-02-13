@@ -12,6 +12,8 @@ export function useReports(academyId: string, year: number) {
     const [loading, setLoading] = useState(true);
     const [monthlyData, setMonthlyData] = useState<MonthlySummary[]>([]);
     const [categorySummaries, setCategorySummaries] = useState<CategorySummary[]>([]);
+    const [rawRevenues, setRawRevenues] = useState<any[]>([]);
+    const [rawExpenses, setRawExpenses] = useState<any[]>([]);
     const [totals, setTotals] = useState({
         totalRevenue: 0,
         totalExpense: 0,
@@ -71,6 +73,8 @@ export function useReports(academyId: string, year: number) {
         const totalRevenue = months.reduce((acc, m) => acc + m.total_revenue, 0);
         const totalExpense = months.reduce((acc, m) => acc + m.total_expense, 0);
 
+        setRawRevenues(revenues);
+        setRawExpenses(expenses);
         setMonthlyData(months);
         setCategorySummaries(catSummaries);
         setTotals({
@@ -81,5 +85,5 @@ export function useReports(academyId: string, year: number) {
         setLoading(false);
     };
 
-    return { monthlyData, categorySummaries, totals, loading };
+    return { monthlyData, categorySummaries, totals, loading, revenues: rawRevenues, expenses: rawExpenses };
 }
