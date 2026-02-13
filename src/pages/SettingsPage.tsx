@@ -15,18 +15,18 @@ export default function SettingsPage() {
 
   // Sync local input state when context changes (e.g. initial load)
   useEffect(() => {
-    setNameInput(academyName);
+    setNameInput(academyName || '');
   }, [academyName]);
 
   useEffect(() => {
-    setIdInput(sheetConfig.spreadsheetId);
-    setUrlInput(sheetConfig.scriptUrl);
+    setIdInput(sheetConfig.spreadsheetId || '');
+    setUrlInput(sheetConfig.scriptUrl || '');
   }, [sheetConfig]);
 
   const handleSaveSettings = async () => {
     try {
       await updateAcademyName(nameInput);
-      await updateSheetConfig({ spreadsheetId: idInput, scriptUrl: urlInput });
+      await updateSheetConfig(idInput, urlInput);
       setMessage({ type: 'success', text: '설정이 저장되었습니다.' });
     } catch (error) {
       setMessage({ type: 'error', text: '저장 중 오류가 발생했습니다.' });
