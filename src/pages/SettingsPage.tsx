@@ -2,46 +2,36 @@ import { useState, useEffect } from 'react';
 import { storage } from '@/lib/storage';
 import { Academy } from '@/lib/types';
 import { Save, Download, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export default function SettingsPage() {
     const academyId = 'demo-academy';
-    const [academyName, setAcademyName] = useState('');
-    const [sheetId, setSheetId] = useState('');
-    const [scriptUrl, setScriptUrl] = useState('');
+    const { academyName, updateAcademyName, sheetConfig, updateSheetConfig } = useSettings();
+
+    // Local state for form inputs
+    const [nameInput, setNameInput] = useState(academyName);
+    const [idInput, setIdInput] = useState(sheetConfig.spreadsheetId);
+    const [urlInput, setUrlInput] = useState(sheetConfig.scriptUrl);
+
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [isBackingUp, setIsBackingUp] = useState(false);
 
+    // Sync local input state when context changes (e.g. initial load)
     useEffect(() => {
-        const academy = storage.getAcademy(academyId);
-        if (academy) {
-            setAcademyName(academy.name);
-            setSheetId(academy.google_sheet_config?.spreadsheet_id || '');
-            setScriptUrl(academy.google_sheet_config?.script_url || '');
-        } else {
-            setAcademyName('ITC 장현 세무기장');
-            // Default Sheet ID provided by user
-            setSheetId('1m5fzLJb6VnGlBUpcniF11nnO7jznV8e_75aVJezFQmQ');
-        }
-    }, [academyId]);
+        setNameInput(academyName);
+        setIdInput(sheetConfig.spreadsheetId);
+        setUrlInput(sheetConfig.scriptUrl);
+    }, [academyName, sheetConfig]);
 
     const handleSaveProfile = (e: React.FormEvent) => {
         e.preventDefault();
-        const current = storage.getAcademy(academyId);
-        const academy: Academy = {
-            ...current!,
-            id: academyId,
-            name: academyName,
-            google_sheet_config: {
-                spreadsheet_id: sheetId,
-                script_url: scriptUrl,
-            },
-        };
-        storage.saveAcademy(academy);
+        updateAcademyName(nameInput);
+        updateSheetConfig(idInput, urlInput);
         showMessage('success', '설정이 저장되었습니다.');
     };
 
     const handleGoogleSheetBackup = async () => {
-        if (!scriptUrl) {
+        if (!urlInput) {
             showMessage('error', 'Google Apps Script URL을 먼저 설정해주세요.');
             return;
         }
@@ -78,8 +68,8 @@ export default function SettingsPage() {
             }
 
             const payload = {
-                spreadsheetId: sheetId,
-                academyName,
+                spreadsheetId: idInput,
+                academyName: nameInput,
                 revenues,
                 expenses
             };
@@ -91,7 +81,7 @@ export default function SettingsPage() {
             // NOTE: 'no-cors' means we can't see if it succeeded or failed based on response body.
             // We will assume success if no network error.
 
-            await fetch(scriptUrl, {
+            await fetch(urlInput, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: {
@@ -167,8 +157,8 @@ export default function SettingsPage() {
                             type="text"
                             required
                             className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={academyName}
-                            onChange={(e) => setAcademyName(e.target.value)}
+                            value={nameInput}
+                            onChange={(e) => setNameInput(e.target.value)}
                         />
                     </div>
 
@@ -184,8 +174,8 @@ export default function SettingsPage() {
                                     type="text"
                                     placeholder="예: 1m5fzLJb6VnGlBUpcniF11nnO7jznV8e_75aVJezFQmQ"
                                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-mono"
-                                    value={sheetId}
-                                    onChange={(e) => setSheetId(e.target.value)}
+                                    value={idInput}
+                                    onChange={(e) => setIdInput(e.target.value)}
                                 />
                             </div>
                             <div>
@@ -194,8 +184,8 @@ export default function SettingsPage() {
                                     type="url"
                                     placeholder="https://script.google.com/macros/s/..."
                                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-mono"
-                                    value={scriptUrl}
-                                    onChange={(e) => setScriptUrl(e.target.value)}
+                                    value={urlInput}
+                                    onChange={(e) => setUrlInput(e.target.value)}
                                 />
                                 <p className="text-xs text-slate-400 mt-1">
                                     * 배포된 Apps Script의 '웹 앱 URL'을 입력하세요.
@@ -233,8 +223,8 @@ export default function SettingsPage() {
                         </div>
                         <button
                             onClick={handleGoogleSheetBackup}
-                            disabled={isBackingUp || !scriptUrl}
-                            className={`flex items-center gap-2 bg-white border border-green-200 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium ${(isBackingUp || !scriptUrl) ? 'opacity-50 cursor-not-allowed' : ''
+                            disabled={isBackingUp || !urlInput}
+                            className={`flex items-center gap-2 bg-white border border-green-200 text-green-700 px-4 py-2 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium ${(isBackingUp || !urlInput) ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                         >
                             {isBackingUp ? '전송 중...' : '시트로 전송'}
