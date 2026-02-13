@@ -105,6 +105,12 @@ export const firestoreService = {
         return sn.docs.map(d => d.data());
     },
 
+    getApprovedUsers: async (): Promise<any[]> => {
+        const q = query(collection(db, 'user_profiles'), where('status', '==', 'approved'));
+        const sn = await getDocs(q);
+        return sn.docs.map(d => d.data());
+    },
+
     updateUserStatus: async (uid: string, status: string) => {
         await setDoc(doc(db, 'user_profiles', uid), {
             status,
