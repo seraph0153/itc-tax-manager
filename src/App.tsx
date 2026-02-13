@@ -8,6 +8,7 @@ import RevenuePage from '@/pages/RevenuePage';
 import ExpensesPage from '@/pages/ExpensesPage';
 import ReportsPage from '@/pages/ReportsPage';
 import SettingsPage from '@/pages/SettingsPage';
+import AdminPage from '@/pages/AdminPage';
 
 function App() {
     return (
@@ -26,6 +27,7 @@ function App() {
                         <Route path="expenses" element={<ExpensesPage />} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="settings" element={<SettingsPage />} />
+                        <Route path="admin" element={<AdminPage />} />
                     </Route>
 
                     <Route path="*" element={<Navigate to="/" replace />} />

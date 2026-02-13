@@ -1,11 +1,23 @@
-export type Role = 'admin' | 'viewer';
+export type UserRole = 'admin' | 'user' | 'master';
+export type UserStatus = 'pending' | 'approved' | 'rejected';
 
-export interface User {
+export interface UserProfile {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL?: string;
+    role: UserRole;
+    status: UserStatus;
+    requestedAt: string;
+    approvedAt?: string;
+}
+
+export interface User { // Legacy, keeping for strict compat if needed, but UserProfile is main
     id: string;
     email: string;
     name: string;
-    role: Role;
-    academy_id: string; // Multi-tenant key
+    role: 'admin' | 'viewer'; // old
+    academy_id: string;
 }
 
 export interface Academy {

@@ -85,5 +85,30 @@ export const firestoreService = {
             batch.set(ref, item);
         });
         await batch.commit();
+    },
+
+    // User Management
+    getUserProfile: async (uid: string): Promise<any> => {
+        // Implementation detail: need to check valid ref
+        const sn = await getDocs(query(collection(db, 'user_profiles'), where('uid', '==', uid)));
+        if (!sn.empty) return sn.docs[0].data();
+        return null;
+    },
+
+    saveUserProfile: async (profile: any) => {
+        await setDoc(doc(db, 'user_profiles', profile.uid), profile);
+    },
+
+    getPendingUsers: async (): Promise<any[]> => {
+        const q = query(collection(db, 'user_profiles'), where('status', '==', 'pending'));
+        const sn = await getDocs(q);
+        return sn.docs.map(d => d.data());
+    },
+
+    updateUserStatus: async (uid: string, status: string) => {
+        await setDoc(doc(db, 'user_profiles', uid), {
+            status,
+            approvedAt: new Date().toISOString()
+        }, { merge: true });
     }
 };
