@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { firestoreService } from '@/lib/firestore';
 import { UserProfile } from '@/lib/types';
-import { Check, X, Shield, Loader2 } from 'lucide-react';
+import { Check, Shield, Loader2 } from 'lucide-react';
 
 export default function AdminPage() {
     const [pendingUsers, setPendingUsers] = useState<UserProfile[]>([]);
