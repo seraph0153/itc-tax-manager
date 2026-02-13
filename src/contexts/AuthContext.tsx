@@ -28,9 +28,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                     // Fetch or Create Profile
                     let profile = await firestoreService.getUserProfile(currentUser.uid);
+                    const isMaster = currentUser.email === MASTER_EMAIL;
 
                     if (!profile) {
-                        const isMaster = currentUser.email === MASTER_EMAIL;
                         const newProfile: UserProfile = {
                             uid: currentUser.uid,
                             email: currentUser.email || '',
@@ -42,7 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         };
                         await firestoreService.saveUserProfile(newProfile);
                         profile = newProfile;
+                    } else if (isMaster && profile.role !== 'master') {
+                        // Fix: If master email exists but role is not master (e.g. created before logic change), update it
+                        await firestoreService.updateUserStatus(currentUser.uid, 'approved'); // Ensure approved
+                        // We need a way to update role. 
+                        // Let's manually double check firestore update.
+                        // Actually, firestoreService doesn't have updateRole, so let's use saveUserProfile with merge or specific update.
+                        // Since saveUserProfile overwrites or we can add a specific update method.
+                        // Let's just update the local profile object and save it back.
+                        profile = { ...profile, role: 'master', status: 'approved' };
+                        await firestoreService.saveUserProfile(profile);
                     }
+
                     setUserProfile(profile);
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
