@@ -12,32 +12,36 @@ import AdminPage from '@/pages/AdminPage';
 
 import RequireAdmin from '@/components/auth/RequireAdmin';
 
+import { SettingsProvider } from '@/contexts/SettingsContext';
+
 function App() {
     return (
         <HashRouter>
             <AuthProvider>
-                <Routes>
-                    <Route path="/login" element={<LoginPage />} />
+                <SettingsProvider>
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
 
-                    <Route path="/" element={
-                        <RequireAuth>
-                            <DashboardLayout />
-                        </RequireAuth>
-                    }>
-                        <Route index element={<DashboardPage />} />
-                        <Route path="revenue" element={<RevenuePage />} />
-                        <Route path="expenses" element={<ExpensesPage />} />
-                        <Route path="reports" element={<ReportsPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
-                        <Route path="admin" element={
-                            <RequireAdmin>
-                                <AdminPage />
-                            </RequireAdmin>
-                        } />
-                    </Route>
+                        <Route path="/" element={
+                            <RequireAuth>
+                                <DashboardLayout />
+                            </RequireAuth>
+                        }>
+                            <Route index element={<DashboardPage />} />
+                            <Route path="revenue" element={<RevenuePage />} />
+                            <Route path="expenses" element={<ExpensesPage />} />
+                            <Route path="reports" element={<ReportsPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
+                            <Route path="admin" element={
+                                <RequireAdmin>
+                                    <AdminPage />
+                                </RequireAdmin>
+                            } />
+                        </Route>
 
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                </SettingsProvider>
             </AuthProvider>
         </HashRouter>
     );
