@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext'; // Import AuthProvider
-import { RequireAuth } from '@/components/auth/RequireAuth'; // Import RequireAuth
+import RequireAuth from '@/components/auth/RequireAuth'; // Import RequireAuth
 import LoginPage from '@/components/auth/LoginPage'; // Import LoginPage
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import DashboardPage from '@/pages/DashboardPage';
