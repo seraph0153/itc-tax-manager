@@ -25,24 +25,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
-                // Fetch or Create Profile
-                let profile = await firestoreService.getUserProfile(currentUser.uid);
+                try {
+                    // Fetch or Create Profile
+                    let profile = await firestoreService.getUserProfile(currentUser.uid);
 
-                if (!profile) {
-                    const isMaster = currentUser.email === MASTER_EMAIL;
-                    const newProfile: UserProfile = {
-                        uid: currentUser.uid,
-                        email: currentUser.email || '',
-                        displayName: currentUser.displayName || 'No Name',
-                        photoURL: currentUser.photoURL || undefined,
-                        role: isMaster ? 'master' : 'user',
-                        status: isMaster ? 'approved' : 'pending',
-                        requestedAt: new Date().toISOString(),
-                    };
-                    await firestoreService.saveUserProfile(newProfile);
-                    profile = newProfile;
+                    if (!profile) {
+                        const isMaster = currentUser.email === MASTER_EMAIL;
+                        const newProfile: UserProfile = {
+                            uid: currentUser.uid,
+                            email: currentUser.email || '',
+                            displayName: currentUser.displayName || 'No Name',
+                            photoURL: currentUser.photoURL || undefined,
+                            role: isMaster ? 'master' : 'user',
+                            status: isMaster ? 'approved' : 'pending',
+                            requestedAt: new Date().toISOString(),
+                        };
+                        await firestoreService.saveUserProfile(newProfile);
+                        profile = newProfile;
+                    }
+                    setUserProfile(profile);
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                    // Handle error appropriately, maybe set user to null or show error
+                    setUserProfile(null);
                 }
-                setUserProfile(profile);
             } else {
                 setUserProfile(null);
             }
@@ -71,9 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    if (loading) {
+        return <div className="h-screen w-full flex items-center justify-center bg-slate-50">Loading...</div>;
+    }
+
     return (
         <AuthContext.Provider value={{ user, userProfile, loading, signInWithGoogle, logout }}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 }
