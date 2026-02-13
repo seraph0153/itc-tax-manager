@@ -10,6 +10,8 @@ import ReportsPage from '@/pages/ReportsPage';
 import SettingsPage from '@/pages/SettingsPage';
 import AdminPage from '@/pages/AdminPage';
 
+import RequireAdmin from '@/components/auth/RequireAdmin';
+
 function App() {
     return (
         <HashRouter>
@@ -27,7 +29,11 @@ function App() {
                         <Route path="expenses" element={<ExpensesPage />} />
                         <Route path="reports" element={<ReportsPage />} />
                         <Route path="settings" element={<SettingsPage />} />
-                        <Route path="admin" element={<AdminPage />} />
+                        <Route path="admin" element={
+                            <RequireAdmin>
+                                <AdminPage />
+                            </RequireAdmin>
+                        } />
                     </Route>
 
                     <Route path="*" element={<Navigate to="/" replace />} />
